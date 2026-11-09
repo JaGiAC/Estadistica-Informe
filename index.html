@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Laboratorio de estadística: biblioteca y desempeño académico</title>
+<style>
+:root{--p:#245B70;--s:#6B9B83;--y:#F2C66D;--t:#263238;--t2:#64748B}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#F8FAFC;color:var(--t);font:15px/1.6 system-ui,"Segoe UI",Roboto,sans-serif}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;color:var(--p)}
+header{background:var(--p);position:sticky;top:0;z-index:9;padding:.5rem 1rem}
+header h1{color:#fff;font-size:1.1rem;margin:0 0 .35rem}
+nav{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:2px}
+nav a{color:#fff;text-decoration:none;white-space:nowrap;padding:.15rem .65rem;border:1px solid #ffffff99;border-radius:6px;font-size:.85rem}
+nav a:hover,nav a:focus-visible{background:#ffffff2e;outline:2px solid var(--y)}
+main{max-width:1100px;margin:auto;padding:1rem}
+section{scroll-margin-top:96px}
+h2{border-bottom:3px solid var(--s);padding-bottom:.2rem}
+h3{font-size:1.02rem;margin:.8rem 0 .4rem}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:1rem;margin:.8rem 0;overflow-x:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(330px,100%),1fr));gap:1rem}
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th,td{padding:.3rem .55rem;border-bottom:1px solid #e2e8f0;text-align:right;white-space:nowrap}
+th{background:#eaf1f4;color:var(--p)}
+td:first-child,th:first-child{text-align:left}
+#qs td{text-align:left;white-space:normal}
+th.s{cursor:pointer}
+.scroll{max-height:380px;overflow:auto}
+.scroll th{position:sticky;top:0}
+.how{background:#fff9ec;border-left:5px solid var(--y);padding:.6rem .9rem;border-radius:6px;margin:.8rem 0 0;font-size:.9rem}
+.warn{background:#f1f5f9;border-left:5px solid var(--t2);padding:.5rem .8rem;border-radius:6px;font-size:.88rem}
+.cap{font-size:.85rem;color:var(--t2);margin:.2rem 0 .6rem}
+.ctl{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin:.5rem 0}
+button,select,input{font:inherit;padding:.3rem .6rem;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:var(--t)}
+button{background:var(--p);color:#fff;border-color:var(--p);cursor:pointer}
+button.alt{background:#fff;color:var(--p)}
+:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+svg{width:100%;height:auto;max-width:560px;display:block;margin:auto}
+code{background:#eef2f5;padding:0 .3rem;border-radius:4px}
+@media print{header,.ctl{display:none}.card{break-inside:avoid;overflow:visible}.scroll{max-height:none}}
+</style>
+</head>
+<body>
+<header><h1>Laboratorio de estadística: biblioteca y desempeño académico</h1>
+<nav><a href="#inicio">Inicio</a><a href="#cuestionario">Cuestionario</a><a href="#datos">Base de datos</a><a href="#frecuencias">Frecuencias</a><a href="#descriptiva">Descriptiva</a><a href="#pruebas">Pruebas</a><a href="#graficos">Gráficos</a></nav></header>
+<main>
+<section id="inicio"><h2>Inicio</h2><div class="card">
+<p><b>Tema:</b> uso de biblioteca y desempeño académico en una institución universitaria.</p>
+<p><b>Objetivo estadístico:</b> describir el uso de la biblioteca en una muestra de estudiantes y explorar su asociación con el promedio académico.</p>
+<p><b>Preguntas guía:</b> (1) ¿se asocian el nivel de uso de la biblioteca y el nivel de rendimiento? (χ²); (2) ¿se relacionan linealmente las horas en biblioteca y el promedio? (Pearson); (3) ¿cuánto varía en promedio la nota por cada hora adicional? (regresión simple).</p>
+<p class="warn"><b>⚠ Datos sintéticos con fines educativos.</b> Se simulan con una semilla pseudoaleatoria: no son estudiantes reales y no permiten concluir nada sobre ninguna institución.</p>
+<p id="kpi"></p>
+<p class="how"><b>💡 Cómo usar el laboratorio:</b> recorra las secciones en orden. Todo se recalcula desde la tabla de «Base de datos»: al generar una nueva muestra cambian las cifras, las tablas y los gráficos. Después de cada procedimiento, «¿Cómo se interpreta?» explica qué mide, cómo leerlo y qué límites tiene. Recuerde que asociación no es causalidad.</p>
+<button onclick="print()">Imprimir</button></div></section>
+
+<section id="cuestionario"><h2>Cuestionario y variables</h2><div class="card"><p>Las preguntas 1 a 11 se aplican al estudiante; las variables 12 y 13 se derivan de las respuestas para poder construir tablas de contingencia.</p><table id="qs"></table></div></section>
+
+<section id="datos"><h2>Base de datos sintética</h2><div class="card">
+<p class="warn"><b>⚠ Datos sintéticos con fines educativos.</b> <span id="meta"></span></p>
+<div class="ctl"><label>Registros <input id="nn" type="number" min="40" max="300" value="60" style="width:5.5rem"></label><button onclick="nuevo()">Generar nueva muestra</button><button class="alt" onclick="reset()">Volver a la base de ejemplo</button><button class="alt" onclick="csv()">Descargar CSV</button></div>
+<div class="ctl"><select id="ff" onchange="rT()"></select><select id="fw" onchange="rT()"></select><select id="fr" onchange="rT()"></select><span id="cnt"></span></div>
+<div class="scroll"><table id="tb"></table></div>
+<p class="cap">Clic en un encabezado para ordenar. Los filtros solo cambian la vista de la tabla; los análisis usan toda la muestra. «—» indica dato faltante, que se excluye solo en los cálculos de esa variable.</p></div></section>
+
+<section id="frecuencias"><h2>Distribuciones de frecuencia</h2><div class="card">
+<div class="ctl"><label>Variable <select id="fv" onchange="rF()"></select></label></div>
+<div class="grid"><div id="ft"></div><div id="fc"></div></div><div id="fh"></div></div></section>
+
+<section id="descriptiva"><h2>Estadística descriptiva</h2><div class="card"><div id="dt"></div><p class="cap">Moda calculada sobre valores redondeados al entero en variables continuas. Varianza y desviación estándar son muestrales (n − 1). Percentiles por interpolación lineal.</p><div id="dh"></div></div></section>
+
+<section id="pruebas"><h2>Pruebas estadísticas</h2>
+<div class="card"><h3>1. Tabla de contingencia y prueba χ² de independencia</h3>
+<div class="ctl"><label>Filas <select id="cx" onchange="rC()"></select></label><label>Columnas <select id="cy" onchange="rC()"></select></label></div><div id="ch"></div></div>
+<div class="card"><h3>2. Correlación de Pearson</h3>
+<div class="ctl"><label>Variable X <select id="rx" onchange="rR();rG()"></select></label><label>Variable Y <select id="ry" onchange="rR();rG()"></select></label></div><div id="pe"></div></div>
+<div class="card"><h3>3. Regresión lineal simple (Y sobre X)</h3><p class="cap">Usa las variables X e Y elegidas en la correlación.</p><div id="rg"></div></div></section>
+
+<section id="graficos"><h2>Gráficos</h2><div class="card">
+<div class="ctl"><label>Variable cualitativa <select id="bv" onchange="rG()"></select></label><label>Variable cuantitativa <select id="hv" onchange="rG()"></select></label></div>
+<div class="grid" id="gg"></div><div id="gh"></div></div></section>
+</main>
+<script>
+const V=[
+{k:'facultad',n:'Facultad',q:'¿En qué facultad estudia?',t:'Cualitativa nominal',c:'1=Ingeniería, 2=Salud, 3=Humanidades, 4=Economía',g:'n',cat:['Ingeniería','Salud','Humanidades','Economía']},
+{k:'semestre',n:'Semestre',q:'¿Qué semestre cursa (1 a 10)?',t:'Cuantitativa discreta',c:'Entero 1–10',g:'d',u:'semestre'},
+{k:'trabaja',n:'Trabaja',q:'¿Trabaja de forma remunerada mientras estudia?',t:'Cualitativa nominal dicotómica',c:'0=No, 1=Sí',g:'n',cat:['No','Sí']},
+{k:'horas_biblio',n:'Horas en biblioteca',q:'¿Cuántas horas por semana permanece en la biblioteca?',t:'Cuantitativa continua',c:'Horas con 1 decimal (0–20)',g:'c',u:'h/sem'},
+{k:'visitas',n:'Visitas semanales',q:'¿Cuántas veces por semana visita la biblioteca?',t:'Cuantitativa discreta',c:'Entero 0–10',g:'d',u:'visitas/sem'},
+{k:'prestamos',n:'Préstamos',q:'¿Cuántos libros prestó este semestre?',t:'Cuantitativa discreta',c:'Entero 0–15',g:'d',u:'libros'},
+{k:'uso_digital',n:'Uso digital',q:'¿Con qué frecuencia usa bases de datos o libros electrónicos de la biblioteca?',t:'Cualitativa ordinal',c:'1=Nunca, 2=A veces, 3=Frecuente',g:'o',cat:['Nunca','A veces','Frecuente']},
+{k:'horas_estudio',n:'Horas de estudio externo',q:'¿Cuántas horas por semana estudia fuera de la biblioteca?',t:'Cuantitativa continua',c:'Horas con 1 decimal (0–30); vacío = no responde',g:'c',u:'h/sem'},
+{k:'asistencia',n:'Asistencia',q:'¿Qué porcentaje de las clases asistió este semestre?',t:'Cuantitativa continua',c:'Porcentaje 50–100',g:'c',u:'%'},
+{k:'satisfaccion',n:'Satisfacción',q:'¿Qué tan satisfecho está con los servicios de la biblioteca? (1 = muy insatisfecho, 5 = muy satisfecho)',t:'Cualitativa ordinal (Likert)',c:'1 a 5',g:'o',cat:['1','2','3','4','5']},
+{k:'promedio',n:'Promedio académico',q:'¿Cuál es su promedio acumulado (escala 0–100)?',t:'Cuantitativa continua',c:'Puntos con 1 decimal',g:'c',u:'puntos'},
+{k:'rendimiento',n:'Rendimiento',q:'(Derivada) Nivel según el promedio',t:'Cualitativa ordinal derivada',c:'Bajo: menos de 70; Medio: 70–79,9; Alto: 80 o más',g:'o',cat:['Bajo','Medio','Alto']},
+{k:'nivel_uso',n:'Nivel de uso',q:'(Derivada) Nivel según horas en biblioteca',t:'Cualitativa ordinal derivada',c:'Bajo: menos de 3 h; Medio: 3–6,9 h; Alto: 7 h o más',g:'o',cat:['Bajo','Medio','Alto']}];
+const VK={},QV=V.filter(v=>v.g=='c'||v.g=='d'),CV=V.filter(v=>v.cat);V.forEach(v=>VK[v.k]=v);
+const E=i=>document.getElementById(i),sum=a=>a.reduce((x,y)=>x+y,0),mean=a=>sum(a)/a.length,
+vr=a=>{if(a.length<2)return NaN;const m=mean(a);return sum(a.map(x=>(x-m)**2))/(a.length-1)},sdv=a=>Math.sqrt(vr(a)),
+qt=(a,p)=>{const s=[...a].sort((x,y)=>x-y),h=(s.length-1)*p,l=Math.floor(h);return s[l]+(h-l)*((s[l+1]??s[l])-s[l])},
+fm=(x,d=2)=>Number.isFinite(x)?x.toLocaleString('es',{minimumFractionDigits:d,maximumFractionDigits:d}):'—',
+pf=p=>p<.001?'< 0,001':'= '+fm(p,3),nm=m=>Math.ceil(m*1.1/4)*4||4,
+how=h=>`<div class="how"><b>💡 ¿Cómo se interpreta?</b><br>${h}</div>`,
+num=k=>D.map(r=>r[k]).filter(Number.isFinite),
+rng=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+let D=[],seed=2024,SK='id',SD=1,LC=null,LR=null;
+
+/* Funciones especiales: gamma incompleta (p de χ²) y beta incompleta (p de r) */
+function lg(x){const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,.001208650973866179,-.000005395239384953];let y=x,t=x+5.5,s=1.000000000190015;t-=(x+.5)*Math.log(t);for(let j=0;j<6;j++)s+=c[j]/++y;return -t+Math.log(2.5066282746310005*s/x)}
+function gq(a,x){if(x<=0)return 1;const g=Math.exp(-x+a*Math.log(x)-lg(a));
+if(x<a+1){let ap=a,s=1/a,d=s;for(let n=0;n<500;n++){ap++;d*=x/ap;s+=d;if(Math.abs(d)<Math.abs(s)*1e-13)break}return Math.max(0,1-s*g)}
+let b=x+1-a,c=1e300,d=1/b,h=d;for(let i=1;i<500;i++){const an=-i*(i-a);b+=2;d=an*d+b;if(Math.abs(d)<1e-300)d=1e-300;c=b+an/c;if(Math.abs(c)<1e-300)c=1e-300;d=1/d;const e=d*c;h*=e;if(Math.abs(e-1)<1e-13)break}return g*h}
+function ib(x,a,b){if(x<=0)return 0;if(x>=1)return 1;const bt=Math.exp(lg(a+b)-lg(a)-lg(b)+a*Math.log(x)+b*Math.log(1-x)),
+cf=(x,a,b)=>{let c=1,d=1-(a+b)*x/(a+1),h;if(Math.abs(d)<1e-30)d=1e-30;d=1/d;h=d;for(let m=1;m<400;m++){const m2=2*m;let aa=m*(b-m)*x/((a+m2-1)*(a+m2));d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;d=1/d;h*=d*c;aa=-(a+m)*(a+b+m)*x/((a+m2)*(a+m2+1));d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;d=1/d;const e=d*c;h*=e;if(Math.abs(e-1)<1e-13)break}return h};
+return x<(a+1)/(a+b+2)?bt*cf(x,a,b)/a:1-bt*cf(1-x,b,a)/b}
+
+/* Generación de datos sintéticos (PRNG con semilla) */
+function gen(n,s){const R=rng(s),N=()=>Math.sqrt(-2*Math.log(1-R()))*Math.cos(6.2832*R()),cl=(x,a,b)=>Math.min(b,Math.max(a,x)),r1=x=>Math.round(x*10)/10,F=VK.facultad.cat,o=[];
+for(let i=1;i<=n;i++){const u=R(),f=u<.3?0:u<.55?1:u<.75?2:3,tr=R()<.35?1:0,m=N(),
+hb=r1(cl(5+2.5*m+((f==1||f==2)?1:0)-1.5*tr+2*N(),0,20)),he=cl(9+3*m+4*N(),0,30),as=r1(cl(85+4*m-4*tr+6*N(),50,100)),ud=.2*hb+.5*m+.9*N(),
+pr=r1(cl(66+1.2*hb+.35*he+.15*(as-80)+6.5*N(),35,100));
+o.push({id:i,facultad:F[f],semestre:1+Math.floor(R()*10),trabaja:tr?'Sí':'No',horas_biblio:hb,visitas:Math.round(cl(hb/2.2+1.1*N(),0,10)),prestamos:Math.round(cl(hb*.5+(f==2?1.5:0)+2*N(),0,15)),uso_digital:ud<.6?'Nunca':ud<1.6?'A veces':'Frecuente',horas_estudio:R()<.04?null:r1(he),asistencia:as,satisfaccion:''+cl(Math.round(3+.1*hb+N()),1,5),promedio:pr,rendimiento:pr<70?'Bajo':pr<80?'Medio':'Alto',nivel_uso:hb<3?'Bajo':hb<7?'Medio':'Alto'})}
+return o}
+
+/* Frecuencias */
+function grp(a){const n=a.length,mn=Math.min(...a),mx=Math.max(...a),r=mx-mn,k0=Math.max(1,Math.ceil(1+3.322*Math.log10(n)));let w=r?r/k0:1;w=r<20?Math.ceil(w*10-1e-9)/10:Math.ceil(w);
+const u=Number.isInteger(w)?1:.1,lo=Math.round(Math.floor(mn/u+1e-9)*u*10)/10,K=Math.max(1,Math.ceil((mx-lo)/w-1e-9)),d=u<1?1:0,c=Array(K).fill(0);
+a.forEach(x=>c[Math.min(K-1,Math.max(0,Math.floor((x-lo)/w+1e-9)))]++);
+return{d,rows:c.map((f,i)=>{const A=lo+i*w;return{f,m:A+w/2,l:`[${fm(A,d)} ; ${fm(A+w,d)}${i==K-1?']':')'}`}})}}
+function freq(k){const v=VK[k],a=D.map(r=>r[k]).filter(x=>x!=null);let L,C,M=null,d=0;
+if(v.cat){L=v.cat;C=L.map(c=>a.filter(x=>x===c).length)}
+else if(v.g=='c'){const g=grp(a);d=g.d;L=g.rows.map(r=>r.l);C=g.rows.map(r=>r.f);M=g.rows.map(r=>r.m)}
+else{L=[...new Set(a)].sort((x,y)=>x-y);C=L.map(c=>a.filter(x=>x===c).length)}
+return{v,L,C,M,d,n:a.length,cum:v.g!='n'}}
+function ftab(o){const n=o.n;let F=0,t=`<table><tr><th>${o.M?'Intervalo':'Categoría o valor'}</th>${o.M?'<th>Marca de clase</th>':''}<th>f</th><th>fr</th><th>%</th>${o.cum?'<th>F</th><th>Fr</th><th>% acum.</th>':''}</tr>`;
+o.L.forEach((l,i)=>{F+=o.C[i];t+=`<tr><td>${l}</td>${o.M?`<td>${fm(o.M[i],o.d+1)}</td>`:''}<td>${o.C[i]}</td><td>${fm(o.C[i]/n,3)}</td><td>${fm(o.C[i]/n*100,1)}</td>${o.cum?`<td>${F}</td><td>${fm(F/n,3)}</td><td>${fm(F/n*100,1)}</td>`:''}</tr>`});
+return t+`<tr><th>Total</th>${o.M?'<th></th>':''}<th>${F}</th><th>${fm(F/n,3)}</th><th>${fm(F/n*100,1)}</th>${o.cum?'<th></th><th></th><th></th>':''}</tr></table>${o.cum?'':'<p class="cap">Variable nominal: no se calculan frecuencias acumuladas porque sus categorías no tienen orden.</p>'}`}
+function mo(a,c){const r=a.map(x=>c?Math.round(x):x),m={};r.forEach(x=>m[x]=(m[x]||0)+1);const mx=Math.max(...Object.values(m)),k=Object.keys(m).filter(x=>m[x]==mx);return mx<2?'sin moda':k.length>2?'multimodal':k.join(', ')}
+
+/* Gráficos SVG */
+function frame(t,xl,yl,y0,y1,b,xs){const st=(y1-y0)/4,d=st%1?1:0;let s=`<svg viewBox="0 0 520 330" role="img" aria-label="${t}"><text x="285" y="18" text-anchor="middle" font-size="12" font-weight="600" fill="#245B70">${t}</text>`;
+for(let i=0;i<=4;i++){const y=270-i*60;s+=`<line x1="55" x2="510" y1="${y}" y2="${y}" stroke="#e2e8f0"/><text x="50" y="${y+4}" text-anchor="end" font-size="10" fill="#64748B">${fm(y0+st*i,d)}</text>`;
+if(xs){const sx=(xs[1]-xs[0])/4;s+=`<text x="${55+i*113.75}" y="286" text-anchor="middle" font-size="10" fill="#64748B">${fm(xs[0]+sx*i,sx%1?1:0)}</text>`}}
+return s+`<line x1="55" x2="55" y1="30" y2="270" stroke="#64748B"/><line x1="55" x2="510" y1="270" y2="270" stroke="#64748B"/>${b}<text x="282" y="318" text-anchor="middle" font-size="11" fill="#263238">${xl}</text><text transform="translate(13 150) rotate(-90)" text-anchor="middle" font-size="11" fill="#263238">${yl}</text></svg>`}
+function bars(t,xl,yl,L,Y,y1=nm(Math.max(...Y)),f=0){const w=455/L.length;let b='';
+Y.forEach((v,i)=>{const h=v/y1*240,x=55+i*w+w*.15;b+=`<rect x="${x}" y="${270-h}" width="${w*.7}" height="${h}" fill="#6B9B83"/><text x="${x+w*.35}" y="${264-h}" text-anchor="middle" font-size="10" fill="#263238">${fm(v,f)}</text><text x="${x+w*.35}" y="286" text-anchor="middle" font-size="10" fill="#64748B">${L[i]}</text>`});
+return frame(t,xl,yl,0,y1,b)}
+function hist(k){const v=VK[k],a=num(k);if(a.length<2)return'<p class="warn">⚠ Datos insuficientes para el histograma.</p>';
+const g=grp(a),K=g.rows.length,sl=455/(K+2),mx=nm(Math.max(...g.rows.map(r=>r.f)));let b='';
+g.rows.forEach((r,i)=>{const h=r.f/mx*240,x=55+(i+1)*sl;b+=`<rect x="${x}" y="${270-h}" width="${sl}" height="${h}" fill="#6B9B83" fill-opacity=".75" stroke="#fff"/><text x="${x+sl/2}" y="286" text-anchor="middle" font-size="9" fill="#64748B">${fm(r.m,g.d+1)}</text>`});
+const P=[0,...g.rows.map(r=>r.f),0].map((f,i)=>[55+(i+.5)*sl,270-f/mx*240]);
+b+=`<polyline points="${P.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#245B70" stroke-width="2"/>`+P.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#245B70"/>`).join('');
+return frame(`Histograma y polígono de frecuencias: «${v.n}»`,`${v.n} (${v.u}; marcas de clase)`,'Frecuencia (estudiantes)',0,mx,b)}
+function pie(t,L,Y){const T=sum(Y);if(!T)return'<p class="warn">⚠ Sin datos.</p>';const col=['#245B70','#6B9B83','#F2C66D','#94A3B8','#A9C4D0','#C9B79C'],nz=Y.filter(y=>y>0).length;let a=-Math.PI/2,s=`<svg viewBox="0 0 520 330" role="img" aria-label="${t}"><text x="260" y="18" text-anchor="middle" font-size="12" font-weight="600" fill="#245B70">${t}</text>`;
+Y.forEach((y,i)=>{const f=y/T,b=a+f*2*Math.PI,P=(r,q)=>`${150+r*Math.cos(q)},${180+r*Math.sin(q)}`;
+if(y>0)s+=nz==1?`<circle cx="150" cy="180" r="110" fill="${col[i%6]}"/>`:`<path d="M150,180 L${P(110,a)} A110,110 0 ${f>.5?1:0} 1 ${P(110,b)} Z" fill="${col[i%6]}" stroke="#fff"/>`;
+s+=`<rect x="300" y="${70+i*26}" width="14" height="14" fill="${col[i%6]}"/><text x="320" y="${82+i*26}" font-size="11" fill="#263238">${L[i]}: ${y} (${fm(f*100,1)} %)</text>`;a=b});
+return s+'</svg>'}
+function scat(R){const X=R.X,Y=R.Y,vx=VK[R.x],vy=VK[R.y],x0=Math.floor(Math.min(...X)),y0=Math.floor(Math.min(...Y)),x1=x0+Math.ceil((Math.max(...X)-x0)/4)*4,y1=y0+Math.ceil((Math.max(...Y)-y0)/4)*4,px=v=>55+(v-x0)/(x1-x0)*455,py=v=>270-(v-y0)/(y1-y0)*240;
+let b=X.map((v,i)=>`<circle cx="${px(v)}" cy="${py(Y[i])}" r="3.5" fill="#6B9B83" fill-opacity=".7" stroke="#245B70" stroke-width=".6"/>`).join('');
+b+=`<line x1="${px(R.xa)}" y1="${py(R.b0+R.b1*R.xa)}" x2="${px(R.xb)}" y2="${py(R.b0+R.b1*R.xb)}" stroke="#245B70" stroke-width="2.5"/>`;
+return frame(`Dispersión y recta de regresión: ${vy.n} según ${vx.n}`,`${vx.n} (${vx.u})`,`${vy.n} (${vy.u})`,y0,y1,b,[x0,x1])}
+
+/* Procedimientos */
+function chi(a,b){const A=VK[a].cat,B=VK[b].cat;let O=A.map(x=>B.map(y=>D.filter(r=>r[a]===x&&r[b]===y).length));
+const ri=A.map((_,i)=>i).filter(i=>sum(O[i])>0),ci=B.map((_,j)=>j).filter(j=>sum(O.map(r=>r[j]))>0);
+O=ri.map(i=>ci.map(j=>O[i][j]));const RL=ri.map(i=>A[i]),CL=ci.map(j=>B[j]);
+if(RL.length<2||CL.length<2)return null;
+const rt=O.map(sum),ct=CL.map((_,j)=>sum(O.map(r=>r[j]))),n=sum(rt),Ex=O.map((r,i)=>r.map((_,j)=>rt[i]*ct[j]/n)),
+x2=sum(O.map((r,i)=>sum(r.map((o,j)=>(o-Ex[i][j])**2/Ex[i][j])))),df=(RL.length-1)*(CL.length-1),fl=Ex.flat();
+return{O,Ex,RL,CL,rt,ct,n,x2,df,p:gq(df/2,x2/2),V:Math.sqrt(x2/(n*(Math.min(RL.length,CL.length)-1))),mn:Math.min(...fl),low:fl.filter(e=>e<5).length,tot:fl.length}}
+function reg(x,y){const P=D.filter(r=>Number.isFinite(r[x])&&Number.isFinite(r[y])),X=P.map(r=>r[x]),Y=P.map(r=>r[y]),n=P.length;if(n<3)return null;
+const mx=mean(X),my=mean(Y);let sxx=0,syy=0,sxy=0;X.forEach((v,i)=>{sxx+=(v-mx)**2;syy+=(Y[i]-my)**2;sxy+=(v-mx)*(Y[i]-my)});
+if(!sxx||!syy)return null;
+const r=sxy/Math.sqrt(sxx*syy),b1=sxy/sxx,df=n-2,r2=r*r,t=Math.abs(r)<1?r*Math.sqrt(df/(1-r2)):Infinity;
+return{x,y,X,Y,n,r,r2,b1,b0:my-b1*mx,df,t,p:Math.abs(r)<1?ib(df/(df+t*t),df/2,.5):0,se:Math.sqrt(Math.max(0,syy*(1-r2))/df),xa:Math.min(...X),xb:Math.max(...X)}}
+
+/* Render */
+function rT(){const fa=E('ff').value,fw=E('fw').value,fr=E('fr').value,
+R=D.filter(r=>(!fa||r.facultad==fa)&&(!fw||r.trabaja==fw)&&(!fr||r.rendimiento==fr)).sort((a,b)=>{const x=a[SK],y=b[SK];if(x==null||y==null)return(x==null)-(y==null);return(typeof x=='number'?x-y:String(x).localeCompare(y,'es'))*SD}),
+K=[{k:'id',n:'ID'},...V];
+E('tb').innerHTML=`<tr>${K.map(v=>`<th class="s" title="Ordenar por esta columna" onclick="so('${v.k}')">${v.n}${SK==v.k?(SD>0?' ▲':' ▼'):''}</th>`).join('')}</tr>`+R.map(r=>`<tr>${K.map(v=>{const x=r[v.k];return`<td>${x==null?'—':v.g=='c'?fm(x,1):x}</td>`}).join('')}</tr>`).join('');
+E('cnt').textContent=`Mostrando ${R.length} de ${D.length} registros`}
+function so(k){SD=SK==k?-SD:1;SK=k;rT()}
+function rF(){const o=freq(E('fv').value),v=o.v,t=o.C.indexOf(Math.max(...o.C));
+E('ft').innerHTML=ftab(o);
+E('fc').innerHTML=v.g=='c'?hist(v.k):bars(`Distribución de «${v.n}»`,v.n+(v.u?` (${v.u})`:''),'Frecuencia (estudiantes)',o.L,o.C);
+E('fh').innerHTML=how(`<b>Qué mide:</b> la frecuencia absoluta (f) cuenta estudiantes; la relativa (fr = f/n) es la proporción y el porcentaje es fr × 100${o.cum?'; las acumuladas (F) indican cuántos casos hay hasta esa fila':''}${o.M?'; la marca de clase es el punto medio de cada intervalo (número de clases por la regla de Sturges)':''}.<br><b>Cómo leer el valor:</b> en «${v.n}» (n = ${o.n}) lo más frecuente es ${o.M?'el intervalo ':''}«${o.L[t]}», con ${o.C[t]} casos (${fm(o.C[t]/o.n*100,1)} %).<br><b>Aporte al tema:</b> muestra cómo se reparte la muestra en el uso de la biblioteca y en el rendimiento, y si hay concentración en pocos valores.<br><b>Conclusiones justificadas:</b> descripciones de esta muestra, no de toda la universidad.<br><b>Limitaciones:</b> el aspecto del histograma cambia con el ancho de clase; los datos son sintéticos${v.k=='horas_estudio'?' y esta variable tiene datos faltantes (n menor)':''}.`)}
+function rD(){const S=[['n',a=>a.length],['Media',mean],['Mediana',a=>qt(a,.5)],['Moda'],['Mínimo',a=>Math.min(...a)],['Máximo',a=>Math.max(...a)],['Rango',a=>Math.max(...a)-Math.min(...a)],['Varianza (s²)',vr],['Desv. estándar (s)',sdv],['Cuartil 1 (P25)',a=>qt(a,.25)],['Cuartil 3 (P75)',a=>qt(a,.75)],['Percentil 10',a=>qt(a,.1)],['Percentil 90',a=>qt(a,.9)]];
+E('dt').innerHTML=`<table><tr><th>Estadístico</th>${QV.map(v=>`<th>${v.n}<br><small>(${v.u})</small></th>`).join('')}</tr>`+S.map(([n,f])=>`<tr><td>${n}</td>${QV.map(v=>{const a=num(v.k);return`<td>${a.length<2?'—':f?fm(f(a),n=='n'?0:2):mo(a,v.g=='c')}</td>`}).join('')}</tr>`).join('')+'</table>';
+const p=num('promedio'),h=num('horas_biblio'),m=mean(p),md=qt(p,.5),s=sdv(p);
+E('dh').innerHTML=how(`<b>Qué mide:</b> la media resume el valor central; la mediana deja la mitad de los casos por debajo y la otra mitad por encima; la moda es el valor más repetido; el rango, la varianza y la desviación estándar (s) miden la dispersión; los cuartiles y percentiles ubican posiciones relativas.<br><b>Cómo leer el valor:</b> el promedio académico tiene media ${fm(m,1)} y mediana ${fm(md,1)} (${Math.abs(m-md)<.1*s?'valores cercanos: distribución casi simétrica':'valores distintos: posible asimetría'}); con s = ${fm(s,1)} puntos, un estudiante típico se aleja unos ${fm(s,1)} puntos de la media, y el 50 % central está entre ${fm(qt(p,.25),1)} y ${fm(qt(p,.75),1)}. En promedio se permanece ${fm(mean(h),1)} horas por semana en la biblioteca.<br><b>Aporte al tema:</b> perfila el uso de la biblioteca y el rendimiento antes de buscar relaciones entre ambos.<br><b>Conclusiones justificadas:</b> descripciones de esta muestra.<br><b>Limitaciones:</b> la media y s son sensibles a valores extremos; la variable «Horas de estudio externo» tiene datos faltantes (n menor); los datos son sintéticos.`)}
+function rC(){const a=E('cx').value,b=E('cy').value;LC=null;
+if(a==b){E('ch').innerHTML='<p class="warn">⚠ Seleccione dos variables distintas.</p>';return}
+const R=chi(a,b);
+if(!R){E('ch').innerHTML='<p class="warn">⚠ Alguna variable tiene menos de dos categorías con datos, por lo que χ² no es aplicable. Alternativa: describirla con frecuencias o elegir otra variable.</p>';return}
+LC=R;LC.a=a;LC.b=b;
+const A=VK[a],B=VK[b],ok=R.mn>=1&&R.low/R.tot<=.2,hd=`<th>${A.n} ↓ / ${B.n} →</th>${R.CL.map(c=>`<th>${c}</th>`).join('')}`,
+t1=`<table><tr>${hd}<th>Total</th></tr>${R.O.map((r,i)=>`<tr><td>${R.RL[i]}</td>${r.map(o=>`<td>${o} (${fm(o/R.rt[i]*100,1)} %)</td>`).join('')}<td>${R.rt[i]}</td></tr>`).join('')}<tr><th>Total</th>${R.ct.map(c=>`<th>${c}</th>`).join('')}<th>${R.n}</th></tr></table>`,
+t2=`<table><tr>${hd}</tr>${R.Ex.map((r,i)=>`<tr><td>${R.RL[i]}</td>${r.map(e=>`<td${e<5?' style="background:#fff9ec;font-weight:700"':''}>${fm(e,2)}${e<5?' ⚠':''}</td>`).join('')}</tr>`).join('')}</table>`;
+E('ch').innerHTML=`<p><b>H₀:</b> «${A.n}» y «${B.n}» son independientes (no hay asociación en la población).<br><b>H₁:</b> existe asociación entre ambas variables. Nivel de significancia α = 0,05.</p><h3>Frecuencias observadas (entre paréntesis, % por fila)</h3>${t1}<h3>Frecuencias esperadas bajo H₀ (⚠ = menor que 5)</h3>${t2}<p><b>χ² = ${fm(R.x2)}</b>; g.l. = ${R.df}; <b>p ${pf(R.p)}</b>; V de Cramér = ${fm(R.V)}.<br><b>Decisión:</b> ${R.p<.05?'se rechaza H₀':'no se rechaza H₀'}.</p><p class="warn"><b>⚠ Revisión de supuestos:</b> observaciones independientes (cada estudiante aparece una vez) y frecuencias esperadas suficientes. ${ok?`Se cumple: la esperada mínima es ${fm(R.mn)} y ${R.low} de ${R.tot} celdas tienen E &lt; 5 (límite recomendado: 20 %).`:`No se cumple del todo (esperada mínima ${fm(R.mn)}; ${R.low} de ${R.tot} celdas con E &lt; 5): el valor p es solo aproximado. Alternativas: agrupar categorías, aumentar n o, en tablas 2×2, usar la prueba exacta de Fisher.`}</p>`+
+how(`<b>Qué mide:</b> χ² compara las frecuencias observadas con las que se esperarían si «${A.n}» y «${B.n}» fueran independientes; la V de Cramér (0 a 1) resume la intensidad de la asociación.<br><b>Cómo leer el valor:</b> χ² = ${fm(R.x2)} con ${R.df} g.l. y p ${pf(R.p)}: ${R.p<.05?'como p &lt; 0,05 se rechaza H₀ y hay evidencia de asociación entre las variables':'como p ≥ 0,05 no se rechaza H₀: no hay evidencia suficiente de asociación'}. V = ${fm(R.V)} (${R.V<.1?'muy débil':R.V<.3?'débil':R.V<.5?'moderada':'fuerte'}). Compare los porcentajes por fila para ver el sentido de la asociación.<br><b>Aporte al tema:</b> indica si las categorías elegidas (por defecto, nivel de uso de la biblioteca y rendimiento) tienden a presentarse juntas.<br><b>Conclusiones justificadas:</b> asociación estadística en esta muestra; no rechazar H₀ no demuestra independencia y rechazarla no demuestra causalidad.<br><b>Limitaciones:</b> exige independencia de las observaciones y frecuencias esperadas suficientes; con n grande, asociaciones pequeñas pueden resultar significativas; los datos son sintéticos.`)}
+function rR(){const x=E('rx').value,y=E('ry').value;LR=null;
+if(x==y){E('pe').innerHTML='<p class="warn">⚠ Seleccione dos variables distintas.</p>';E('rg').innerHTML='';return}
+const R=reg(x,y);
+if(!R){E('pe').innerHTML=E('rg').innerHTML='<p class="warn">⚠ Hay menos de 3 pares completos o una variable no varía: no se puede calcular r ni la recta.</p>';return}
+LR=R;const X=VK[x],Y=VK[y],ad=Math.abs(R.r),dir=R.r>0?'positiva (a más X, tiende a haber más Y)':R.r<0?'negativa (a más X, tiende a haber menos Y)':'nula',it=ad<.1?'prácticamente nula':ad<.3?'débil':ad<.5?'moderada':ad<.7?'fuerte':'muy fuerte';
+E('pe').innerHTML=`<p><b>H₀:</b> ρ = 0 (no hay relación lineal en la población). <b>H₁:</b> ρ ≠ 0. α = 0,05.</p><table><tr><th>Pares completos (n)</th><th>r de Pearson</th><th>r²</th><th>t</th><th>g.l.</th><th>p (bilateral)</th></tr><tr><td>${R.n}</td><td>${fm(R.r,3)}</td><td>${fm(R.r2,3)}</td><td>${fm(R.t,2)}</td><td>${R.df}</td><td>${pf(R.p).replace('= ','')}</td></tr></table><p><b>Lectura:</b> relación ${dir}, de intensidad ${it}; ${R.p<.05?'estadísticamente significativa':'no significativa'} al 5 %.</p><p class="warn"><b>⚠ Una correlación no demuestra causalidad.</b></p>`+
+how(`<b>Qué mide:</b> r de Pearson va de −1 a +1 e indica la dirección y la fuerza de la relación <i>lineal</i> entre dos variables cuantitativas; r² es la parte de variación que comparten.<br><b>Cómo leer el valor:</b> r = ${fm(R.r,3)} entre «${X.n}» y «${Y.n}»: relación ${dir}, de intensidad ${it}; comparten ${fm(R.r2*100,1)} % de la variación. Con p ${pf(R.p)} ${R.p<.05?'se rechaza H₀: la relación lineal es distinguible de cero':'no se rechaza H₀: no hay evidencia suficiente de relación lineal'}.<br><b>Aporte al tema:</b> indica si quienes usan más la biblioteca tienden a tener (o no) mejores promedios.<br><b>Conclusiones justificadas:</b> existe o no asociación lineal en esta muestra. <b>No se puede afirmar que una variable cause la otra</b>: la motivación, la asistencia o el tiempo de estudio podrían influir en ambas.<br><b>Limitaciones:</b> solo detecta relaciones lineales, es sensible a valores atípicos, el p depende de n y los datos son sintéticos. Con variables ordinales o atípicos, una alternativa es la correlación de Spearman.`);
+E('rg').innerHTML=`<p><b>Ecuación estimada:</b> ŷ = ${fm(R.b0)} ${R.b1<0?'−':'+'} ${fm(Math.abs(R.b1))}·x &nbsp;(x = ${X.n}; ŷ = ${Y.n} estimado)</p><table><tr><th>Intercepto b₀</th><th>Pendiente b₁</th><th>R²</th><th>Error típico de estimación</th></tr><tr><td>${fm(R.b0)}</td><td>${fm(R.b1)}</td><td>${fm(R.r2,3)}</td><td>${fm(R.se)} ${Y.u}</td></tr></table>
+<div class="ctl"><b>Predicción prudente:</b><label>x = <input id="px" type="number" step="any" value="${Math.round(mean(R.X)*10)/10}" oninput="prd()"></label>${X.u} → <span id="pr"></span></div>
+<div class="grid"><div>${scat(R)}</div><div class="scroll" style="max-height:330px"><table><tr><th>#</th><th>${X.n}</th><th>Observado</th><th>Estimado (ŷ)</th><th>Residuo</th></tr>${R.X.map((v,i)=>{const e=R.b0+R.b1*v;return`<tr><td>${i+1}</td><td>${fm(v,1)}</td><td>${fm(R.Y[i],1)}</td><td>${fm(e,1)}</td><td>${fm(R.Y[i]-e,1)}</td></tr>`}).join('')}</table></div></div>`+
+how(`<b>Qué mide:</b> la recta de mínimos cuadrados ŷ = b₀ + b₁x resume cómo cambia en promedio Y al variar X: b₁ es el cambio medio estimado de Y por cada unidad de X, b₀ es el valor estimado cuando X = 0 y R² es la proporción de la variabilidad de Y que la recta explica.<br><b>Cómo leer el valor:</b> por cada unidad adicional de «${X.n}» (${X.u}), «${Y.n}» ${R.b1>=0?'aumenta':'disminuye'} en promedio ${fm(Math.abs(R.b1))} ${Y.u}. R² = ${fm(R.r2,3)}: ${fm(R.r2*100,1)} % de la variabilidad de Y se asocia con X y el ${fm(100-R.r2*100,1)} % restante depende de otros factores o del azar; el error típico es ${fm(R.se)} ${Y.u}. ${R.xa>0?`El intercepto no tiene interpretación práctica: x = 0 queda fuera del rango observado (${fm(R.xa,1)} a ${fm(R.xb,1)}).`:''}<br><b>Aporte al tema:</b> permite estimar el promedio esperado según el uso de la biblioteca, siempre como valor medio y no como garantía individual.<br><b>Conclusiones justificadas:</b> predicciones solo dentro del rango observado de X; la pendiente describe asociación, no efecto causal.<br><b>Limitaciones:</b> un solo predictor (no controla asistencia, trabajo ni otras variables), supone relación lineal y dispersión residual homogénea, y los datos son sintéticos.`);prd()}
+function prd(){const R=LR,v=parseFloat(E('px').value);E('pr').innerHTML=!R||Number.isNaN(v)?'ingrese un valor numérico':`ŷ = ${fm(R.b0+R.b1*v)} ${VK[R.y].u}`+(v<R.xa||v>R.xb?` <b>⚠ Fuera del rango observado (${fm(R.xa,1)} a ${fm(R.xb,1)}): extrapolación poco confiable.</b>`:'')}
+function rG(){const b=VK[E('bv').value],h=VK[E('hv').value],o=freq(b.k),T=sum(o.C),mi=o.C.indexOf(Math.max(...o.C)),a=num(h.k),cp=x=>`<p class="cap">${x}</p>`,
+gm=o.L.map(c=>{const z=D.filter(r=>r[b.k]===c&&Number.isFinite(r.promedio)).map(r=>r.promedio);return{c,n:z.length,m:z.length?mean(z):NaN}}).filter(g=>g.n);
+let c4='<p class="warn">⚠ Un solo grupo con datos: no hay comparación posible.</p>';
+if(gm.length>1){const hi=gm.reduce((p,q)=>q.m>p.m?q:p),lo=gm.reduce((p,q)=>q.m<p.m?q:p);
+c4=bars(`Promedio académico medio según «${b.n}»`,b.n,'Promedio medio (puntos)',gm.map(g=>`${g.c} (n=${g.n})`),gm.map(g=>g.m),100,1)+cp(`<b>Lectura:</b> el promedio más alto corresponde a «${hi.c}» (${fm(hi.m,1)}) y el más bajo a «${lo.c}» (${fm(lo.m,1)}): diferencia descriptiva de ${fm(hi.m-lo.m,1)} puntos. No prueba un efecto causal ni se evaluó su significancia.${b.k=='rendimiento'?' Aquí la diferencia es esperable: «Rendimiento» se define a partir del promedio.':''}`)}
+const R=E('rx').value!=E('ry').value?reg(E('rx').value,E('ry').value):null;
+E('gg').innerHTML=[
+bars(`Frecuencia de «${b.n}»`,b.n,'Frecuencia (estudiantes)',o.L,o.C)+cp(`<b>Lectura:</b> la categoría más frecuente es «${o.L[mi]}» (${fm(o.C[mi]/T*100,1)} %). Las alturas son frecuencias absolutas.`),
+pie(`Composición de la muestra según «${b.n}»`,o.L,o.C)+cp(`<b>Lectura:</b> cada sector es la proporción de estudiantes de la categoría (n = ${T}); sirve para comparar las partes con el total cuando hay pocas categorías.`),
+hist(h.k)+cp(`<b>Lectura:</b> el histograma muestra la forma de la distribución y el polígono une las marcas de clase. En «${h.n}»: media ${fm(mean(a),1)}, mediana ${fm(qt(a,.5),1)} y s = ${fm(sdv(a),1)} ${h.u}.`),
+c4,
+R?scat(R)+cp(`<b>Lectura:</b> cada punto es un estudiante y la recta resume la tendencia lineal (r = ${fm(R.r,2)}). Una nube muy dispersa alrededor de la recta indica que X explica solo una parte de Y.`):'<p class="warn">⚠ Elija dos variables distintas con datos suficientes en «Pruebas» para ver la dispersión.</p>'
+].map(x=>`<div>${x}</div>`).join('');
+E('gh').innerHTML=how(`<b>Qué muestran:</b> las barras comparan frecuencias; el círculo, proporciones; el histograma, la forma de una variable continua (el polígono une las marcas de clase); la comparación de medias contrasta grupos y la dispersión muestra la relación entre dos variables.<br><b>Cómo leerlos:</b> busque la categoría o el intervalo más alto, la simetría y los valores extremos; en la dispersión, observe si la nube sigue la recta.<br><b>Conclusiones y límites:</b> las figuras describen esta muestra sintética; su aspecto depende de los intervalos y de las escalas (las barras parten de cero), y ninguna prueba causalidad.`)}
+
+/* Control */
+function all(){E('meta').textContent=`Muestra de n = ${D.length} estudiantes simulados (semilla ${seed}).`;
+E('kpi').innerHTML=`<b>Muestra actual:</b> n = ${D.length}; promedio académico medio = ${fm(mean(num('promedio')),1)} puntos; horas semanales medias en biblioteca = ${fm(mean(num('horas_biblio')),1)}.`;
+rT();rF();rD();rC();rR();rG()}
+function build(){const n=Math.min(300,Math.max(40,parseInt(E('nn').value)||60));E('nn').value=n;D=gen(n,seed);all()}
+function nuevo(){seed=Math.floor(Math.random()*1e9);build()}
+function reset(){seed=2024;E('nn').value=60;build()}
+function csv(){const h=['id',...V.map(v=>v.k)],s=[h.join(',')].concat(D.map(r=>h.map(k=>r[k]==null?'':r[k]).join(','))).join('\n'),a=document.createElement('a');
+a.href=URL.createObjectURL(new Blob(['\ufeff'+s],{type:'text/csv;charset=utf-8'}));a.download='datos_sinteticos_biblioteca.csv';document.body.appendChild(a);a.click();a.remove()}
+function init(){E('qs').innerHTML='<tr><th>N.º</th><th>Pregunta</th><th>Variable</th><th>Tipo</th><th>Codificación</th></tr>'+V.map((v,i)=>`<tr><td>${i+1}</td><td>${v.q}</td><td><code>${v.k}</code></td><td>${v.t}</td><td>${v.c}</td></tr>`).join('');
+const o=(A,s)=>A.map(v=>`<option value="${v.k}"${v.k==s?' selected':''}>${v.n}</option>`).join(''),fo=(k,l)=>`<option value="">${l}</option>`+VK[k].cat.map(c=>`<option>${c}</option>`).join('');
+E('fv').innerHTML=o(V,'promedio');E('cx').innerHTML=E('bv').innerHTML=o(CV,'nivel_uso');E('cy').innerHTML=o(CV,'rendimiento');E('rx').innerHTML=E('hv').innerHTML=o(QV,'horas_biblio');E('ry').innerHTML=o(QV,'promedio');
+E('ff').innerHTML=fo('facultad','Facultad: todas');E('fw').innerHTML=fo('trabaja','Trabaja: todos');E('fr').innerHTML=fo('rendimiento','Rendimiento: todos');build()}
+init();
+</script>
+</body>
+</html>
